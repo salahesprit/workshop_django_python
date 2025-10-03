@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
+
 # Create your models here.
 import uuid
 def generate_user_id():
