@@ -33,7 +33,7 @@ class Conference(models.Model):#modifier le comportement de la classe
         if self.start_date and self.end_date:
             if self.end_date < self.start_date:
                 raise ValidationError("la date de fin doit etre superieur a la date de debut")
-      
+                
 def validate_keywords(value):
     
      # Séparer les mots-clés par virgule et supprimer les espaces

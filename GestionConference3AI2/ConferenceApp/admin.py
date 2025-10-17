@@ -33,8 +33,12 @@ class admin_Conference_model(admin.ModelAdmin):
         return "RAS"
     a.short_description="Duration (days)"
     inlines=[Submission_inline]
-
-
+@admin.action(description="marker comme payer")
+def marked_as_payed(modeladmin,req,queryset):
+    queryset.update(payed=True)
+@admin.action(description="marked as requested")
+def marked_as_requested(modeladmin,req,queryset):
+    queryset.update(status="accepted")
 @admin.register(Submission)
 class admin_Submission_model(admin.ModelAdmin):
     list_display=("title","status","user","conference","submission_date","payed","a")
@@ -58,3 +62,4 @@ class admin_Submission_model(admin.ModelAdmin):
         }),
     )
     readonly_fields = ('submission_id', 'submission_date') 
+    actions=[marked_as_payed,marked_as_requested]
