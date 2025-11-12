@@ -5,6 +5,7 @@ from django.core.validators import RegexValidator
 from django.core.validators import FileExtensionValidator
 from django.utils import timezone
 import uuid
+import random, string
 # Create your models here.
 
 class Conference(models.Model):#modifier le comportement de la classe 
@@ -72,6 +73,7 @@ class Submission (models.Model):
     user=models.ForeignKey("UserApp.User",on_delete=models.CASCADE,related_name="submissions")
     conference=models.ForeignKey(Conference,on_delete=models.CASCADE, related_name="submissions")
     def clean(self):
+        '''
         if self.submission_date:
         # 1️⃣ Vérifier que la conférence est à venir
             if self.conference.start_date < timezone.now().date() and self.submission_date>self.conference.start_date:
@@ -100,7 +102,34 @@ class Submission (models.Model):
                 k=k.strip()
                 if k:
                     keywords_list.append(k)"""
+'''
+        # 🔹 Vérification dates : uniformiser date/datetime
+        if self.conference and self.conference.start_date and self.submission_date:
+            start_date = self.conference.start_date
+            submission_date = self.submission_date.date()  # convert datetime -> date
+            if start_date < timezone.now().date() and submission_date > start_date:
+                raise ValidationError("La soumission ne peut être faite que pour des conférences à venir.")
 
+        # 🔹 Vérification mots-clés
+        keyword_list = []
+        if self.keywords:
+            for k in self.keywords.split(","):
+                k = k.strip()
+                if k:
+                    keyword_list.append(k)
+                    if len(keyword_list) > 10:
+                        raise ValidationError({"keywords": "Vous ne pouvez pas saisir plus de 10 mots-clés."})
+
+        # 🔹 Limite de soumissions par jour
+        if self.user_id:
+            today = timezone.now().date()
+            submissions_today = Submission.objects.filter(
+                user=self.user,
+                submission_date__date=today
+            ).count()
+            if submissions_today >= 3 and not self.pk:  # exclude if updating
+                raise ValidationError("Vous ne pouvez pas soumettre plus de 3 conférences par jour.")
+    '''       
     def save(self, *args, **kwargs): #*args is for a format of a tuple and **kwargs is  for a format of a dictionary
          if not self.submission_id:
             newid = generate_submission_id()
@@ -108,4 +137,11 @@ class Submission (models.Model):
                 newid = generate_submission_id()
             self.submission_id=newid
             self.full_clean()  # appelle clean() avant chaque sauvegarde
-            super().save(*args,**kwargs)     
+            super().save(*args,**kwargs) '''
+    def save(self, *args, **kwargs):
+        if not self.submission_id:
+            random_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+            self.submission_id = f"SUB-{random_part}"
+        if hasattr(self, "user") and self.user is not None:
+            self.full_clean()  # Call validations before saving
+        super().save(*args, **kwargs)    
